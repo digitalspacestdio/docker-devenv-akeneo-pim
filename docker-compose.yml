@@ -101,6 +101,16 @@ services:
     healthcheck:
       test: "mysqladmin ping --silent -u$${MYSQL_USER} -p$${MYSQL_PASSWORD}"
 
+  elasticsearch:
+    image: 'docker.elastic.co/elasticsearch/elasticsearch-oss:6.5.4'
+    environment:
+      ES_JAVA_OPTS: '${ES_JAVA_OPTS:--Xms512m -Xmx1024m}'
+      discovery.type: 'single-node'
+    ports:
+      - '${DOCKER_PORT_ELASTICSEARCH:-9210}:9200'
+    networks:
+      - 'akeneo'
+
   nginx:
     image: 'crunchgeek/nginx-pagespeed'
     environment:
