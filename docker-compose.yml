@@ -5,12 +5,13 @@ services:
     image: busybox
     command: sh -c 'chmod 0777 -R /var/www/var/cache; while true; do sleep 1; done;'
     volumes:
-      - 'akeneo-var-cache:/var/www/var/cache'
-      - 'akeneo-public-cache:/var/www/var/public/cache'
+      - 'pim-var-cache:/var/www/var/cache'
+      - 'pim-public-cache:/var/www/var/public/cache'
     networks:
-      - 'akeneo'
+      - 'pim'
 
   fpm:
+    image: digitalspacestudio/php-akeneo-pim:7.2
     build: './fpm'
     environment:
       COMPOSER_HOME: '/var/www/.composer'
@@ -20,13 +21,14 @@ services:
       - './fpm/php.ini:/home/linuxbrew/.linuxbrew/etc/php/7.2/php.ini:ro'
       - './fpm/prepend.php:/home/linuxbrew/.linuxbrew/etc/php/7.2/prepend.php:ro'
       - './fpm/entrypoint.sh:/entrypoint.sh:ro'
+      - './fpm/ecosystem.config.js:/ecosystem.config.js:ro'
       - './fpm/msmtprc:/home/linuxbrew/.msmtprc:ro'
-      - 'akeneo-var-cache:/var/www/var/cache'
-      - 'akeneo-public-cache:/var/www/var/public/cache'
+      - 'pim-var-cache:/var/www/var/cache'
+      - 'pim-public-cache:/var/www/var/public/cache'
     working_dir: '/var/www'
     command: '/bin/bash /entrypoint.sh'
     networks:
-      - 'akeneo'
+      - 'pim'
     depends_on:
       - 'database'
       - "mongodb"
@@ -35,7 +37,7 @@ services:
       - XHGUI_MONGO_HOSTNAME=mongodb
       - XHGUI_MONGO_DATABASE=xhprof
     networks:
-      - 'akeneo'
+      - 'pim'
     healthcheck:
       test: /bin/bash -c "</dev/tcp/localhost/9000"
 
@@ -52,7 +54,7 @@ services:
     depends_on:
       - 'mongodb'
     networks:
-      - 'akeneo'
+      - 'pim'
     healthcheck:
       test: nc -vz -w 1 localhost 80
 
@@ -61,7 +63,7 @@ services:
     ports:
       - "${DOCKER_PORT_MAIL_HTTP:-8125}:8025"
     networks:
-      - 'akeneo'
+      - 'pim'
     healthcheck:
       test: "nc -vz -w 1 localhost 8025"
       start_period: 5s
@@ -78,7 +80,7 @@ services:
     ports:
       - "${DOCKER_PORT_MONGODB:-27017}:27017"
     networks:
-      - 'akeneo'
+      - 'pim'
     healthcheck:
       test: mongo --quiet --eval 'db.runCommand("ping").ok' xhgui
 
@@ -93,11 +95,11 @@ services:
       MYSQL_PASSWORD: 'akeneo'
     volumes:
       - './docker/mysql/mysql.initdb.d:/docker-entrypoint-initdb.d:ro'
-      - './docker/mysql/my.cnf:/etc/mysql/conf.d/akeneo.cnf:ro'
+      - './docker/mysql/my.cnf:/etc/mysql/conf.d/pim.cnf:ro'
     ports:
       - '${DOCKER_PORT_MYSQL:-33006}:3306'
     networks:
-      - 'akeneo'
+      - 'pim'
     healthcheck:
       test: "mysqladmin ping --silent -u$${MYSQL_USER} -p$${MYSQL_PASSWORD}"
 
@@ -109,7 +111,7 @@ services:
     ports:
       - '${DOCKER_PORT_ELASTICSEARCH:-9210}:9200'
     networks:
-      - 'akeneo'
+      - 'pim'
 
   nginx:
     image: 'crunchgeek/nginx-pagespeed'
@@ -129,15 +131,15 @@ services:
       - './www:/var/www:ro'
       - './docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
       - './docker/nginx/pagespeed.conf:/etc/nginx/pagespeed.conf:ro'
-      - 'akeneo-public-cache:/var/www/var/public/cache:ro'
+      - 'pim-public-cache:/var/www/var/public/cache:ro'
     networks:
-      - 'akeneo'
+      - 'pim'
 
 networks:
-  akeneo:
+  pim:
 
 volumes:
-  akeneo-var-cache:
+  pim-var-cache:
     driver: local
-  akeneo-public-cache:
+  pim-public-cache:
     driver: local

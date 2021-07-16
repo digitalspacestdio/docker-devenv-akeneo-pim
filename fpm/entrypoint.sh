@@ -14,21 +14,22 @@ cd /var/www
 sudo mkdir -p /var/www/.composer
 sudo chmod 0777 /var/www/.composer
 
-echo "[$(date +'%F %T')] ==> Installing vendors"
-composer-1.10 install --optimize-autoloader --no-progress --no-dev --no-interaction
-find . -depth -name ".git" -print -exec rm -rf "{}" \;
-
-echo "[$(date +'%F %T')] ==> Verify Installation"
-bin/console pim:installer:check-requirements
-
-echo "[$(date +'%F %T')] ==> Clearing the cache"
-NO_DOCKER=true make cache
-
-echo "[$(date +'%F %T')] ==> Build frontend"
-NO_DOCKER=true make upgrade-front
-
-echo "[$(date +'%F %T')] ==> Apply migration"
-bin/console doctrine:migrations:migrate
-
-cd /var/www
+#
+#echo "[$(date +'%F %T')] ==> Installing vendors"
+#composer-1.10 install --optimize-autoloader --no-progress --no-dev --no-interaction
+#find . -depth -name ".git" -print -exec rm -rf "{}" \;
+#
+#echo "[$(date +'%F %T')] ==> Verify Installation"
+#bin/console pim:installer:check-requirements
+#
+#echo "[$(date +'%F %T')] ==> Clearing the cache"
+#NO_DOCKER=true make cache
+#
+#echo "[$(date +'%F %T')] ==> Build frontend"
+#NO_DOCKER=true make upgrade-front
+#
+#echo "[$(date +'%F %T')] ==> Apply migration"
+#bin/console doctrine:migrations:migrate
+#
+#cd /var/www
 exec /home/linuxbrew/.linuxbrew/opt/php72/sbin/php-fpm --nodaemonize --fpm-config /home/linuxbrew/.linuxbrew/etc/php/7.2/php-fpm.conf

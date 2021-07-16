@@ -24,6 +24,7 @@ RUN brew install msmtp
 RUN brew install node@12
 RUN brew install python@2
 RUN brew link -f node@12 && npm install --global yarn
+RUN npm install pm2@latest -g
 
 # Cleanup
 RUN brew cleanup \
