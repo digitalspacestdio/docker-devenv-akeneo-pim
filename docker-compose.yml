@@ -126,7 +126,7 @@ services:
       - 'fpm'
       - 'database'
     ports:
-      - '${DOCKER_PORT_HTTP:-8181}:80'
+      - '${DOCKER_PORT_HTTP:-8182}:80'
     volumes:
       - './www:/var/www:ro'
       - './nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
