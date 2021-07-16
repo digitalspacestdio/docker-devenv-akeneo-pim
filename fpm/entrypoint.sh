@@ -31,4 +31,4 @@ echo "[$(date +'%F %T')] ==> Apply migration"
 bin/console doctrine:migrations:migrate
 
 cd /var/www
-exec /home/linuxbrew/.linuxbrew/opt/php73/sbin/php-fpm --nodaemonize --fpm-config /home/linuxbrew/.linuxbrew/etc/php/7.2/php-fpm.conf
+exec /home/linuxbrew/.linuxbrew/opt/php72/sbin/php-fpm --nodaemonize --fpm-config /home/linuxbrew/.linuxbrew/etc/php/7.2/php-fpm.conf
