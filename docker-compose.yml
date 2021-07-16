@@ -1,0 +1,134 @@
+version: '3.4'
+
+services:
+  akeneo-cache:
+    image: busybox
+    command: sh -c 'chmod 0777 -R /var/www/var/cache; while true; do sleep 1; done;'
+    volumes:
+      - 'akeneo-var-cache:/var/www/var/cache'
+      - 'akeneo-public-cache:/var/www/var/public/cache'
+    networks:
+      - 'akeneo'
+
+  fpm:
+    build: './fpm'
+    environment:
+      COMPOSER_HOME: '/var/www/.composer'
+    volumes:
+      - './www:/var/www'
+      - './fpm/php-fpm.ini:/home/linuxbrew/.linuxbrew/etc/php/7.2/php-fpm.conf:ro'
+      - './fpm/php.ini:/home/linuxbrew/.linuxbrew/etc/php/7.2/php.ini:ro'
+      - './fpm/prepend.php:/home/linuxbrew/.linuxbrew/etc/php/7.2/prepend.php:ro'
+      - './fpm/entrypoint.sh:/entrypoint.sh:ro'
+      - './fpm/msmtprc:/home/linuxbrew/.msmtprc:ro'
+    volumes_from:
+      - akeneo-cache
+    working_dir: '/var/www'
+    command: '/bin/bash /entrypoint.sh'
+    networks:
+      - 'akeneo'
+    depends_on:
+      - 'database'
+      - "mongodb"
+      - "mail"
+    environment:
+      - XHGUI_MONGO_HOSTNAME=mongodb
+      - XHGUI_MONGO_DATABASE=xhprof
+    networks:
+      - 'akeneo'
+    healthcheck:
+      test: /bin/bash -c "</dev/tcp/localhost/9000"
+
+  xhgui:
+    image: "xhgui/xhgui:0.18.1"
+    volumes:
+      - ./docker/xhgui/config:/var/www/xhgui/config
+      - ./docker/xhgui/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      - XHGUI_MONGO_HOSTNAME=mongodb
+      - XHGUI_MONGO_DATABASE=xhprof
+    ports:
+      - "${DOCKER_PORT_XHGUI:-8142}:80"
+    depends_on:
+      - 'mongodb'
+    networks:
+      - 'akeneo'
+    healthcheck:
+      test: nc -vz -w 1 localhost 80
+
+  mail:
+    image: "mailhog/mailhog"
+    ports:
+      - "${DOCKER_PORT_MAIL_HTTP:-8125}:8025"
+    networks:
+      - 'akeneo'
+    healthcheck:
+      test: "nc -vz -w 1 localhost 8025"
+      start_period: 5s
+      interval: 5s
+
+  mongodb:
+    image: percona/percona-server-mongodb:4.4
+    # (case sensitive) engine: mmapv1, rocksdb, wiredTiger, inMemory
+    command: --storageEngine=wiredTiger
+    environment:
+      - MONGO_INITDB_DATABASE=xhprof
+    volumes:
+      - ./mongo/initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - "${DOCKER_PORT_MONGODB:-27017}:27017"
+    networks:
+      - 'akeneo'
+    healthcheck:
+      test: mongo --quiet --eval 'db.runCommand("ping").ok' xhgui
+
+  database:
+    image: 'mariadb:10.3.28'
+    command: '--default-authentication-plugin=mysql_native_password'
+    environment:
+      LANG: 'C.UTF-8'
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_USER: 'akeneo'
+      MYSQL_DATABASE: 'akeneo'
+      MYSQL_PASSWORD: 'akeneo'
+    volumes:
+      - './docker/mysql/mysql.initdb.d:/docker-entrypoint-initdb.d:ro'
+      - './docker/mysql/my.cnf:/etc/mysql/conf.d/akeneo.cnf:ro'
+    ports:
+      - '${DOCKER_PORT_MYSQL:-33006}:3306'
+    networks:
+      - 'akeneo'
+    healthcheck:
+      test: "mysqladmin ping --silent -u$${MYSQL_USER} -p$${MYSQL_PASSWORD}"
+
+  nginx:
+    image: 'crunchgeek/nginx-pagespeed'
+    environment:
+      NGINX_GEOIP: 'off'
+      NGINX_PAGESPEED: 'on'
+      NGINX_PAGESPEED_IMG: 'on'
+      NGINX_PAGESPEED_JS: 'on'
+      NGINX_PAGESPEED_CSS: 'on'
+      NGINX_PAGESPEED_STORAGE: 'files'
+    depends_on:
+      - 'fpm'
+      - 'database'
+    ports:
+      - '${DOCKER_PORT_HTTP:-8181}:80'
+    volumes:
+      - './www:/var/www:ro'
+      - './docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
+      - './docker/nginx/pagespeed.conf:/etc/nginx/pagespeed.conf:ro'
+    volumes_from:
+      - akeneo-cache
+    networks:
+      - 'akeneo'
+
+networks:
+  akeneo:
+
+volumes:
+  akeneo-var-cache:
+    driver: local
+  akeneo-public-cache:
+    driver: local
