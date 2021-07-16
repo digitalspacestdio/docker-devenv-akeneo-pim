@@ -21,8 +21,8 @@ services:
       - './fpm/prepend.php:/home/linuxbrew/.linuxbrew/etc/php/7.2/prepend.php:ro'
       - './fpm/entrypoint.sh:/entrypoint.sh:ro'
       - './fpm/msmtprc:/home/linuxbrew/.msmtprc:ro'
-    volumes_from:
-      - akeneo-cache
+      - 'akeneo-var-cache:/var/www/var/cache'
+      - 'akeneo-public-cache:/var/www/var/public/cache'
     working_dir: '/var/www'
     command: '/bin/bash /entrypoint.sh'
     networks:
@@ -119,8 +119,7 @@ services:
       - './www:/var/www:ro'
       - './docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
       - './docker/nginx/pagespeed.conf:/etc/nginx/pagespeed.conf:ro'
-    volumes_from:
-      - akeneo-cache
+      - 'akeneo-public-cache:/var/www/var/public/cache:ro'
     networks:
       - 'akeneo'
 
