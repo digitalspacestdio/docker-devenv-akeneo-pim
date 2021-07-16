@@ -1,28 +1,30 @@
 version: '3.4'
 
 services:
-  akeneo-cache:
-    image: busybox
-    command: sh -c 'chmod 0777 -R /var/www/var/cache; while true; do sleep 1; done;'
+  php-cli:
+    image: digitalspacestudio/php-akeneo-pim:7.4
+    build: './docker/php'
+    command: sh -c 'while true; do sleep 1; done;'
     volumes:
+      - './www:/var/www'
       - 'pim-var-cache:/var/www/var/cache'
       - 'pim-public-cache:/var/www/var/public/cache'
     networks:
       - 'pim'
 
   fpm:
-    image: digitalspacestudio/php-akeneo-pim:7.2
-    build: './fpm'
+    image: digitalspacestudio/php-akeneo-pim:7.4
+    build: './docker/php'
     environment:
       COMPOSER_HOME: '/var/www/.composer'
     volumes:
       - './www:/var/www'
-      - './fpm/php-fpm.ini:/home/linuxbrew/.linuxbrew/etc/php/7.2/php-fpm.conf:ro'
-      - './fpm/php.ini:/home/linuxbrew/.linuxbrew/etc/php/7.2/php.ini:ro'
-      - './fpm/prepend.php:/home/linuxbrew/.linuxbrew/etc/php/7.2/prepend.php:ro'
-      - './fpm/entrypoint.sh:/entrypoint.sh:ro'
-      - './fpm/ecosystem.config.js:/ecosystem.config.js:ro'
-      - './fpm/msmtprc:/home/linuxbrew/.msmtprc:ro'
+      - './docker/php/php-fpm.ini:/home/linuxbrew/.linuxbrew/etc/php/7.4/php-fpm.conf:ro'
+      - './docker/php/php.ini:/home/linuxbrew/.linuxbrew/etc/php/7.4/php.ini:ro'
+      - './docker/php/prepend.php:/home/linuxbrew/.linuxbrew/etc/php/7.4/prepend.php:ro'
+      - './docker/php/entrypoint.sh:/entrypoint.sh:ro'
+      - './docker/php/ecosystem.config.js:/ecosystem.config.js:ro'
+      - './docker/php/msmtprc:/home/linuxbrew/.msmtprc:ro'
       - 'pim-var-cache:/var/www/var/cache'
       - 'pim-public-cache:/var/www/var/public/cache'
     working_dir: '/var/www'
@@ -44,8 +46,8 @@ services:
   xhgui:
     image: "xhgui/xhgui:0.18.1"
     volumes:
-      - ./xhgui/config:/var/www/xhgui/config
-      - ./xhgui/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/xhgui/config:/var/www/xhgui/config
+      - ./docker/xhgui/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     environment:
       - XHGUI_MONGO_HOSTNAME=mongodb
       - XHGUI_MONGO_DATABASE=xhprof
@@ -76,7 +78,7 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=xhprof
     volumes:
-      - ./mongo/initdb.d:/docker-entrypoint-initdb.d
+      - ./docker/mongo/initdb.d:/docker-entrypoint-initdb.d
     ports:
       - "${DOCKER_PORT_MONGODB:-27017}:27017"
     networks:
@@ -94,8 +96,8 @@ services:
       MYSQL_DATABASE: 'akeneo'
       MYSQL_PASSWORD: 'akeneo'
     volumes:
-      - './mysql/mysql.initdb.d:/docker-entrypoint-initdb.d:ro'
-      - './mysql/my.cnf:/etc/mysql/conf.d/pim.cnf:ro'
+      - './docker/mysql/mysql.initdb.d:/docker-entrypoint-initdb.d:ro'
+      - './docker/mysql/my.cnf:/etc/mysql/conf.d/pim.cnf:ro'
     ports:
       - '${DOCKER_PORT_MYSQL:-33006}:3306'
     networks:
@@ -129,11 +131,15 @@ services:
       - '${DOCKER_PORT_HTTP:-8182}:80'
     volumes:
       - './www:/var/www:ro'
-      - './nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
-      - './nginx/pagespeed.conf:/etc/nginx/pagespeed.conf:ro'
+      - './docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
+      - './docker/nginx/pagespeed.conf:/etc/nginx/pagespeed.conf:ro'
       - 'pim-public-cache:/var/www/var/public/cache:ro'
     networks:
       - 'pim'
+    healthcheck:
+      test: '[ $$(curl -o /dev/null -s -w "%\{http_code\}" -L http://localhost/) -eq 200 ]]'
+      timeout: 10s
+      start_period: 10s
 
 networks:
   pim:

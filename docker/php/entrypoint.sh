@@ -29,4 +29,4 @@ chmod 0777 /var/www/.composer
 #bin/console doctrine:migrations:migrate
 #
 #cd /var/www
-exec /home/linuxbrew/.linuxbrew/opt/php72/sbin/php-fpm --nodaemonize --fpm-config /home/linuxbrew/.linuxbrew/etc/php/7.2/php-fpm.conf
+exec /home/linuxbrew/.linuxbrew/opt/php74/sbin/php-fpm --nodaemonize --fpm-config /home/linuxbrew/.linuxbrew/etc/php/7.4/php-fpm.conf

@@ -2,7 +2,7 @@ FROM digitalspacestudio/linuxbrew:latest
 LABEL maintainer="Sergey Cherepanov <sergey@digitalspace.studio>"
 LABEL name="digitalspacestudio/php"
 ARG DEBIAN_FRONTEND=noninteractive
-ARG BREW_FORMULA=digitalspacestdio/php/php72
+ARG BREW_FORMULA=digitalspacestdio/php/php74
 ARG HOMEBREW_NO_INSTALL_CLEANUP=1
 ARG HOMEBREW_NO_AUTO_UPDATE=1
 ARG HOMEBREW_NO_ANALYTICS=1
