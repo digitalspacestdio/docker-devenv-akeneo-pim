@@ -2,8 +2,8 @@
 set -e
 
 echo "[$(date +'%F %T')] ==> Creating cache dirs"
-mkdir -p /var/www/public/{cache}
-mkdir -p /var/www/var/{logs,cache,file_storage}
+#mkdir -p /var/www/public/{cache}
+#mkdir -p /var/www/var/{logs,cache,file_storage}
 
 cd /var/www
 mkdir -p /var/www/.composer
